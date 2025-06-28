@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LATIHAN SOAL KEYSA</title>
+  <style>
+    @font-face {
+      font-family: 'Cartoon Doodle';
+      src: url('CartoonDoodle.ttf') format('truetype');
+    }
+
+    body {
+      font-family: 'Cartoon Doodle', Arial, sans-serif;
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #000;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 { color: #040404; }
+    #timer { font-size: 30px; margin-bottom: 10px; font-weight: bold; }
+
+    .question-box, #start-box {
+      max-width: 600px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .question {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .question img {
+      max-width: 100%;
+      max-height: 300px;
+      margin: 10px auto;
+      border-radius: 10px;
+      display: block;
+    }
+
+    .option-container {
+      display: flex;
+      align-items: center;
+      background-color: rgba(10, 135, 245, 0.755);
+      border: 2px solid #FBC02D;
+      border-radius: 8px;
+      padding: 10px 15px;
+      margin: 10px auto;
+      max-width: 500px;
+      text-align: left;
+      font-size: 18px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .option-container input[type="radio"] {
+      display: none;
+    }
+
+    .option-container span::before {
+      content: "☐";
+      font-size: 18px;
+      margin-right: 10px;
+      color: #FBC02D;
+    }
+
+    .option-container input[type="radio"]:checked + span::before {
+      content: "✔️";
+      color: green;
+    }
+
+    #next-btn {
+      margin-top: 15px;
+      padding: 10px 25px;
+      font-size: 16px;
+      border: none;
+      background-color: #AD1457;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      display: none;
+    }
+
+    #score {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    input[type="text"] {
+      font-size: 18px;
+      padding: 10px;
+      width: 80%;
+      margin-bottom: 10px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background-color: #D81B60;
+      color: white;
+      margin: 5px;
+    }
+
+    ul {
+      text-align: left;
+      padding-left: 20px;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .question-box, #start-box { padding: 15px; }
+      .option-container { font-size: 16px; padding: 8px 12px; }
+    }
+  </style>
+</head>
+<body>
+<h1>LATIHAN SOAL KEYSA</h1>
+
+<div id="start-box">
+  <h2>Masukkan Nama Kamu:</h2>
+  <input type="text" id="nama" placeholder="Nama kamu di sini..." />
+  <br />
+  <button onclick="mulaiKuis()">Mulai</button>
+</div>
+
+<div id="timer" style="display:none;">⏱ Waktu: 10:00</div>
+
+<div id="voice-controls" style="display:none;">
+  <button onclick="playSpeech()">🔊 Putar Suara</button>
+  <button onclick="pauseSpeech()">⏸️ Jeda</button>
+  <button onclick="resumeSpeech()">▶️ Lanjut</button>
+  <button onclick="stopSpeech()">⏹️ Stop</button>
+</div>
+
+<div class="question-box" style="display:none;">
+  <div id="question-number"></div>
+  <div class="question">
+    <img id="question-image" src="" alt="Gambar Soal" style="display:none;">
+    <div id="question-text"></div>
+  </div>
+  <form id="options"></form>
+  <div id="score"></div>
+  <button id="next-btn" onclick="nextQuestion()">Soal Berikutnya</button>
+</div>
+
+<script>
+const questions = [
+  { q: "Berapakah 8 + 2?", options: ["12", "10", "14", "11"], answer: "10" },
+  { q: "Ada Berapa jumlah Bintang dalam gambar ini...", image: "Soal Bintang.jpg", options: ["7", "8", "9", "10"], answer: "9" },
+  { q: "Angka yang tepat untuk penjumlahan rumpang diatas ini adalah...", image: "Soal Rumpang 1.jpg", options: ["3", "4", "5", "6"], answer: "4" },
+  { q: "Angka yang tepat untuk penjumlahan rumpang diatas ini adalah...", image: "Soal Rumpang 2.jpg", options: ["6", "1", "8", "5"], answer: "5" },
+  { q: "12 - 7?", options: ["5", "6", "7", "8"], answer: "5" },
+  { q: "Penjumlahan yang sesuai dengan gambar di atas ini adalah...", image: "Soal 5.jpg", options: ["3+4=7", "3-5=2", "2+4=6", "6+3=9"], answer: "3+4=7" },
+  { q: "Penjumlahan yang sesuai dengan gambar di atas ini adalah...", image: "Soal 6.jpg", options: ["3+4=7", "6-5=1", "6+4=10", "6+3=9"], answer: "6+4=10" },
+  { q: "Berapa jumlah dari angka yang ada di gambar ini...", image: "soal_2.png", options: ["7", "8", "9", "10"], answer: "9" },
+  { q: "Nama bilangan pada gambar diatas ini adalah...", image: "Soal 7.jpg", options: ["Tiga", "Empat", "Lima", "Enam"], answer: "Enam" },
+  { q: "Nama bilangan pada gambar diatas ini adalah...", image: "Soal 8.jpg", options: ["Tiga satu", "Tiga Belas", "Tiga Puluh satu", "Satu Tiga"], answer: "Tiga Belas" },
+  { q: "Hasil pengurangan pada gambar ini adalah...", image: "Soal 11.jpg", options: ["1", "2", "3", "4"], answer: "1" },
+  { q: "Hasil pengurangan pada gambar ini adalah...", image: "Soal 12.jpg", options: ["6", "2", "5", "3"], answer: "5" },
+  { q: "Hasil penjumlahan pada gambar ini adalah...", image: "Soal 13.jpg", options: ["5", "6", "8", "9"], answer: "9" },
+  { q: "Hasil penjumlahan pada gambar ini adalah...", image: "Soal 14.jpg", options: ["10", "8", "9", "7"], answer: "8" },
+  { q: "Ada berapa kupu-kupu pada gambar ini...", image: "Soal 15.jpg", options: ["5", "6", "7", "8"], answer: "7" },
+  { q: "Ada berapa kelinci pada gambar ini...", image: "Soal 16.jpg", options: ["4", "5", "6", "7"], answer: "4" },
+  { q: "Hasil penjumlahan pada gambar ini adalah...", image: "Soal 17.jpg", options: ["5", "6", "8", "9"], answer: "6" },
+  { q: "Hasil penjumlahan pada gambar ini adalah...", image: "Soal 18.jpg", options: ["7", "9", "10", "8"], answer: "10" },
+  { q: "Hasil pengurangan pada gambar ini adalah...", image: "Soal 19.jpg", options: ["2", "3", "4", "5"], answer: "3" },
+  { q: "Hasil pengurangan pada gambar ini adalah...", image: "Soal 20.jpg", options: ["6", "7", "8", "9"], answer: "6" },
+];
+
+let current = 0;
+let score = 0;
+let timer;
+let timeLeft = 600;
+let startTime;
+let namaAnak = "";
+let jawabanPengguna = [];
+let lastSpokenText = "";
+
+function speakQueue(textList) {
+  stopSpeech();
+  if (!Array.isArray(textList)) textList = [textList];
+  function speakNext(index) {
+    if (index >= textList.length) return;
+    const utterance = new SpeechSynthesisUtterance(textList[index]);
+    utterance.lang = 'id-ID';
+    utterance.onend = () => speakNext(index + 1);
+    speechSynthesis.speak(utterance);
+    lastSpokenText = textList[index];
+  }
+  speakNext(0);
+}
+
+function playSpeech() { if (!speechSynthesis.speaking && lastSpokenText) speakQueue(lastSpokenText); }
+function pauseSpeech() { if (speechSynthesis.speaking && !speechSynthesis.paused) speechSynthesis.pause(); }
+function resumeSpeech() { if (speechSynthesis.paused) speechSynthesis.resume(); }
+function stopSpeech() { speechSynthesis.cancel(); }
+
+function mulaiKuis() {
+  const namaInput = document.getElementById('nama').value.trim();
+  if (!namaInput) return alert("Silakan isi nama terlebih dahulu.");
+  namaAnak = namaInput;
+  document.getElementById('start-box').style.display = 'none';
+  document.querySelector('.question-box').style.display = 'block';
+  document.getElementById('timer').style.display = 'block';
+  document.getElementById('voice-controls').style.display = 'block';
+  speakQueue(`Halo ${namaAnak}, selamat mengerjakan ya!`);
+  startTime = Date.now();
+  loadQuestion();
+  startTimer();
+}
+
+function startTimer() {
+  timer = setInterval(() => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timer').innerText = `⏱ Waktu: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    if (timeLeft-- <= 0) {
+      clearInterval(timer);
+      selesaiKuis("⏰ Waktu Habis!");
+    }
+  }, 1000);
+}
+
+function loadQuestion() {
+  const q = questions[current];
+  const abcd = ["a", "b", "c", "d"];
+  document.getElementById('question-number').innerText = `Soal ${current + 1} dari ${questions.length}`;
+  document.getElementById('question-text').innerText = q.q;
+
+  const soalTTS = q.q.replace(/ditambah/gi, '+').replace(/dikurang/gi, '-');
+  const suara = [`Soal ${current + 1}. ${soalTTS}`];
+
+  const img = document.getElementById('question-image');
+  if (q.image) {
+    img.src = `images/${q.image}`;
+    img.style.display = 'block';
+    suara.push("Lihat gambar.");
+  } else {
+    img.style.display = 'none';
+  }
+
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const label = document.createElement('label');
+    label.className = 'option-container';
+
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'option';
+    input.value = opt;
+    input.onclick = () => {
+      document.getElementById('next-btn').style.display = 'inline-block';
+    };
+
+    const span = document.createElement('span');
+    span.innerText = `${abcd[i]}. ${opt}`;
+
+    label.appendChild(input);
+    label.appendChild(span);
+    optionsDiv.appendChild(label);
+
+    suara.push(`Pilihan ${abcd[i]}: ${opt}`);
+  });
+
+  speakQueue(suara);
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('score').innerText = `Skor: ${score} / 100`;
+}
+
+function nextQuestion() {
+  const selected = document.querySelector('input[name="option"]:checked');
+  if (!selected) return alert("Pilih salah satu jawaban dulu ya!");
+
+  const selectedValue = selected.value;
+  const correct = questions[current].answer;
+  if (selectedValue === correct) score += 5;
+
+  jawabanPengguna.push({
+    soal: questions[current].q,
+    benar: correct,
+    dipilih: selectedValue,
+    gambar: questions[current].image || null
+  });
+
+  current++;
+  if (current < questions.length) {
+    loadQuestion();
+  } else {
+    clearInterval(timer);
+    selesaiKuis("Kuis Selesai!");
+  }
+}
+
+function selesaiKuis(judul) {
+  const endTime = Date.now();
+  const waktuTotal = Math.floor((endTime - startTime) / 1000);
+  const menit = Math.floor(waktuTotal / 60);
+  const detik = waktuTotal % 60;
+
+  let salah = jawabanPengguna.filter(j => j.dipilih !== j.benar);
+  let evaluasiHTML = '';
+  if (salah.length > 0) {
+    evaluasiHTML = '<h3>Soal yang dijawab salah:</h3><ul>';
+    salah.forEach(item => {
+      evaluasiHTML += `<li><strong>Soal:</strong> ${item.soal}<br>
+        <strong>Jawaban kamu:</strong> ${item.dipilih}<br>
+        <strong>Jawaban benar:</strong> ${item.benar}</li><br>`;
+    });
+    evaluasiHTML += '</ul>';
+  } else {
+    evaluasiHTML = '<p>Hebat! Semua soal dijawab dengan benar! 🎉</p>';
+  }
+
+  document.querySelector('.question-box').innerHTML = `
+    <h2>${judul}</h2>
+    <p>${namaAnak}, skor akhir kamu: <strong>${score} / 100</strong></p>
+    <p>⏱ Total waktu pengerjaan: ${menit} menit ${detik} detik</p>
+    ${evaluasiHTML}
+    <button onclick="location.reload()">🔁 Ulangi</button>
+  `;
+  speakQueue(`${judul}. ${namaAnak}, skor kamu adalah ${score} dari 100. Waktu kamu ${menit} menit ${detik} detik.`);
+}
+</script>
+</body>
+</html>
